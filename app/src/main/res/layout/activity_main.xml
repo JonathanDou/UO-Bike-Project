@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id = "@+id/button"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:text="Data Screen"/>
+    <Button
+        android:id = "@+id/button2"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:text="Server Message"/>
+
+    <Button
+        android:id = "@+id/button3"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:text="Traffic Screen"/>
+
+    <TextView
+        android:id = "@+id/my_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
+
+    <TextView
+        android:id = "@+id/dataReceived"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
+    <ImageView
+        android:id = "@+id/imageup"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageView
+        android:id = "@+id/imagedown"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageView
+        android:id = "@+id/imagecheck"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageView
+        android:id = "@+id/imagedown2"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageView
+        android:id = "@+id/imageup2"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</LinearLayout>
