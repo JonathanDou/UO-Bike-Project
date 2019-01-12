@@ -14,6 +14,8 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Handler
 import android.speech.tts.TextToSpeech
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.NotificationCompat
@@ -21,6 +23,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
 import org.json.JSONArray
 import java.util.*
 import org.json.JSONObject
@@ -185,12 +188,29 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     }
 
+
     override fun onInit(status: Int) {
         if(status == TextToSpeech.SUCCESS) {
             tts!!.setLanguage(Locale.US)
             Log.d("TTSTAG", "Text to Speech Initialized")
         } else {
             Log.d("TTSTAG", "TTS Failed to Initialize")
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if(checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            System.exit(0)
+        } else {
+            val text = "Restart the App to Setup GPS Location! App will close in 3 seconds..."
+            val duration = Toast.LENGTH_LONG
+
+            val toast = Toast.makeText(applicationContext, text, duration)
+            toast.show()
+
+            Handler().postDelayed({
+                System.exit(0)
+            }, 3000)
         }
     }
 
@@ -309,8 +329,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         //CHECK PERMISSIONS
 
-        val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
-        ActivityCompat.requestPermissions(this, permissions, 0)
+        if(checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            ActivityCompat.requestPermissions(this, permissions, 0)
+
+            Log.d("PERMISSION TAG", "REQUESTED")
+        } else {
+            Log.d("PERMISSION TAG", "NOT REQUESTED")
+        }
 
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
@@ -333,7 +359,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         //Check Location
-        
+
         val locationListener: LocationListener = object : LocationListener {
 
             var targetlocation = Location("")
@@ -665,7 +691,5 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             Log.d("MQTTTAG2", "MQTT DID NOT CONNECT?")
             ex.printStackTrace()
         }
-
     }
-
 }
