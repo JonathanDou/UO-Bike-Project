@@ -20,7 +20,7 @@
         android:id = "@+id/button3"
         android:layout_width="350dp"
         android:layout_height="wrap_content"
-        android:text="Traffic Screen"/>
+        android:text="Visual Speed Commands"/>
 
     <TextView
         android:id = "@+id/my_text"

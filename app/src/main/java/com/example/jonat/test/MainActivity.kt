@@ -131,6 +131,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return Pair(minspeed, maxspeed)
     }
 
+    fun appReady(): Boolean {
+        for(i in 0..6) {
+            if(timestamps[i] == 0L) {
+                return false
+            }
+        }
+
+        return true
+    }
+
     fun getActivity(speed: Float, maxspeed: Float, on13th: Boolean): String {
         if(on13th == true) {
             if(maxspeed == 0F) {
@@ -163,10 +173,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         var rawts = timeobject.getString("BecameActiveTimestamp")
         timestampstring = rawts.toString()
 
-        var dateFormat = SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSSSSSZ")
+        var dateFormat = SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSSSSSZ", Locale.UK)
         var parsedDate = dateFormat.parse(timestampstring)
         timestamp = parsedDate.getTime()
-        Log.d("TIMETAG", timestamp.toString())
+
+        if((System.currentTimeMillis() - timestamp) > 10000) {
+            timestamp = timestamp + 12  *3600*1000
+        }
 
         active_phases = jsobject.getString("ActivePhases")
 
@@ -291,10 +304,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         var oldlocation = Location("")
 
-        /*var currentlocation = Location("") //fake location
-        currentlocation.latitude = 44.045503
-        currentlocation.longitude = -123.0815*/
-
         var signals = listOf(olive, willamette, oak, pearl, high, patterson, hilyard)
         var signal_names = listOf("olive", "willamette", "oak", "pearl", "high", "patterson", "hilyard")
 
@@ -311,6 +320,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         mBuilder.setContentTitle("Biker Notification")
         mBuilder.setContentText("App Started")
         mBuilder.setSmallIcon(R.drawable.ic_stat_onesignal_default)
+        mBuilder.setOngoing(true)
         mBuilder.setContentIntent(PendingIntent.getActivity(this , 100 ,
                 Intent(this, MainActivity::class.java) , PendingIntent.FLAG_UPDATE_CURRENT))
 
@@ -323,7 +333,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         //Check Location
-
+        
         val locationListener: LocationListener = object : LocationListener {
 
             var targetlocation = Location("")
@@ -337,6 +347,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             var display = ""
             var maxspeed = 0F
             var initialcolor = "g"
+            var counter = 0
 
             override fun onLocationChanged(location: Location) {
 
@@ -345,11 +356,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     currentlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
 
-                    //currentlocation.longitude = currentlocation.longitude - 0.0001 //fake biker
-
                     //check if on 13th
 
-                    if(currentlocation.latitude > 44.045400 && currentlocation.latitude < 44.045700 && currentlocation.longitude > -123.095 && currentlocation.longitude < -123.081) {
+                    if(currentlocation.latitude > 44.045350 && currentlocation.latitude < 44.045750 && currentlocation.longitude > -123.095 && currentlocation.longitude < -123.081) {
                         if(on13th == false) {
                             on13th = true
                             mBuilder.setContentText("Tap Here to Go to App")
@@ -362,10 +371,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     //find next stop
                     if(androidspeed > 0.5) {
-                        if (on13th == true) {
-                            if (currentlocation.longitude < oldlocation.longitude) {
-                                for (i in 1..(signals.size)) {
-                                    if (signals[signals.size - i].longitude < currentlocation.longitude) {
+                        if(on13th == true) {
+                            if(currentlocation.longitude < oldlocation.longitude) {
+                                for(i in 1..(signals.size)) {
+                                    if(signals[signals.size - i].longitude < currentlocation.longitude) {
                                         targetlocation = signals[signals.size - i]
                                         nextstop = signal_names[signals.size - i]
                                         currentstop = signals.size - i
@@ -373,8 +382,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                     }
                                 }
                             } else {
-                                for (i in 0..(signals.size - 1)) {
-                                    if (signals[i].longitude > currentlocation.longitude) {
+                                for(i in 0..(signals.size - 1)) {
+                                    if(signals[i].longitude > currentlocation.longitude) {
                                         targetlocation = signals[i]
                                         nextstop = signal_names[i]
                                         currentstop = i
@@ -389,7 +398,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     distance = currentlocation.distanceTo(targetlocation)
-                    var timeremaining = (((System.currentTimeMillis() - timestamps[currentstop])/1000)).toFloat()
+                    var timeremaining = (((System.currentTimeMillis() - timestamps[currentstop])/1000)%72).toFloat()
 
                     if(timeremaining < greentimes[currentstop]) {
                         initialcolor = "g"
@@ -398,6 +407,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         initialcolor = "r"
                         timeremaining = 72 - timeremaining
                     }
+
 
                     if(timeremaining < 0) {
                         timeremaining = 0F
@@ -418,8 +428,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     } else {
                         maxspeed = 0F
                     }
-
-                    //androidspeed = currentlocation.distanceTo(oldlocation) //fake biker
 
                     //Suggest speed
 
@@ -453,7 +461,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             speedup2.visibility = View.VISIBLE
                             slowdown2.visibility = View.GONE
                         } else {
-                            speedcommand = "YOU ARE GOOD"
+                            speedcommand = "YOU ARE AT A GOOD SPEED"
                             speedup.visibility = View.GONE
                             slowdown.visibility = View.GONE
                             check.visibility = View.VISIBLE
@@ -482,7 +490,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     //Display text
 
-                    if(on13th == true) {
+                    if(appReady() == false) {
+                        display = "App is currently initializing timestamps.."
+                    } else if(on13th == true) {
                         display = "Your Speed: " + androidspeed + " meters per second"
                         display = display + "\nNext Stoplight: " + nextstop
                         display = display + "\nStoplight Color: " + initialcolor
@@ -494,6 +504,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         display = display + "\nLongitude: " + currentlocation.longitude.toString() + "\nLatitude: " + currentlocation.latitude.toString()
                     } else {
                         display = "You are currently not on 13th Avenue."
+                    }
+
+                    if(client.isConnected) {
+                        display = display + "\n\nServer Status: Connected!"
+                    } else {
+                        display = display + "\n\nServer Status: Not Connected."
+                    }
+
+                    if(on13th == true) {
+                        if(counter == 5) {
+                            counter = 0
+                            tts!!.speak(speedcommand, TextToSpeech.QUEUE_FLUSH, null)
+                        } else {
+                            counter++
+                        }
                     }
 
                     text.setText(display)
@@ -533,10 +558,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             override fun messageArrived(topic: String, mqttMessage: MqttMessage) {
                 var trafficlight = ""
                 Log.w("MQTTTAG", "RECEIVED MESSAGE")
+                Log.d("TIMETAG", System.currentTimeMillis().toString())
 
                 parsePayload(mqttMessage.toString())
 
                 if(active_phases.substring(1,2) == "2") {
+
 
                     if(topic == "TrafficData/4de40699-dbf3-4616-aed4-a77700e02c7e") {
                         trafficlight = "Hilyard"
@@ -572,12 +599,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 var text2 = "Server Message: " + mqttMessage.toString()
 
                 text2 = text2 + "\n\nActive Phases: " + active_phases
-                text2 = text2 + "\n\nCurrent Time: " + time
-                text2 = text2 + "\n\nTraffic Light: " + trafficlight
+                text2 = text2 + "\nCurrent Time: " + time
+                text2 = text2 + "\nTraffic Light: " + trafficlight
+                text2 = text2 + "\nSystem Time: " + System.currentTimeMillis().toString()
+                text2 = text2 + "\nTime Stamp: " + timestamp.toString()
+
 
                 Log.d("TIMETAG", "Active Phases: " + active_phases + "\nBecame Active Timestamp: " + timestampstring + "\nCurrent Time: " + hours + ":" + minutes + ":" + seconds + "\nTraffic Light: " + trafficlight)
 
                 dataReceived.setText(text2)
+
+                var message = MqttMessage()
+                message.setPayload("MESSAGE WAS RECEIVED SUCCESSFULLY.".toByteArray())
+                client.publish("Client Messages", message)
             }
 
             override fun deliveryComplete(iMqttDeliveryToken: IMqttDeliveryToken) {
@@ -618,9 +652,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             ex.printStackTrace()
                         }
 
-                        var message = MqttMessage()
-                        message.setPayload("Test Message From Jonathan's Computer".toByteArray())
-                        client.publish("TrafficData", message)
                     }
                 }
 
